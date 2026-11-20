@@ -14,13 +14,11 @@ import {PixLogo} from './PixLogo';
 
 export function PixPaymentCard() {
   const [copied, setCopied] = useState(false);
-  const [buttonCopied, setButtonCopied] = useState(false);
   const [copyPulseKey, setCopyPulseKey] = useState(0);
   const [showBanks, setShowBanks] = useState(false);
   const [bankNotice, setBankNotice] = useState<string | null>(null);
 
   const copiedTimerRef = useRef<number | null>(null);
-  const buttonCopiedTimerRef = useRef<number | null>(null);
   const bankTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -28,19 +26,31 @@ export function PixPaymentCard() {
       if (copiedTimerRef.current !== null) {
         window.clearTimeout(copiedTimerRef.current);
       }
-      if (buttonCopiedTimerRef.current !== null) {
-        window.clearTimeout(buttonCopiedTimerRef.current);
-      }
       if (bankTimerRef.current !== null) {
         window.clearTimeout(bankTimerRef.current);
       }
     };
   }, []);
 
-  const triggerCopyFeedback = () => {
+  const handleCopyPix = async () => {
+    const ok = await copyToClipboard(PIX_PAYMENT_DATA.pixKey);
+    if (ok) {
+      setCopied(true);
+      setCopyPulseKey((k) => k + 1);
+      setShowBanks(true);
+
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
+      }
+      copiedTimerRef.current = window.setTimeout(() => {
+        setCopied(false);
+      }, 6000);
+    }
+  };
+
+  const handleOpenBankApp = async (bank: BankAppOption) => {
+    await copyToClipboard(PIX_PAYMENT_DATA.pixKey);
     setCopied(true);
-    setButtonCopied(true);
-    setCopyPulseKey((k) => k + 1);
 
     if (copiedTimerRef.current !== null) {
       window.clearTimeout(copiedTimerRef.current);
@@ -48,26 +58,6 @@ export function PixPaymentCard() {
     copiedTimerRef.current = window.setTimeout(() => {
       setCopied(false);
     }, 6000);
-
-    if (buttonCopiedTimerRef.current !== null) {
-      window.clearTimeout(buttonCopiedTimerRef.current);
-    }
-    buttonCopiedTimerRef.current = window.setTimeout(() => {
-      setButtonCopied(false);
-    }, 2600);
-  };
-
-  const handleCopyPix = async () => {
-    const ok = await copyToClipboard(PIX_PAYMENT_DATA.pixKey);
-    if (ok) {
-      triggerCopyFeedback();
-      setShowBanks(true);
-    }
-  };
-
-  const handleOpenBankApp = async (bank: BankAppOption) => {
-    await copyToClipboard(PIX_PAYMENT_DATA.pixKey);
-    triggerCopyFeedback();
 
     const isMobileDevice =
       typeof navigator !== 'undefined' &&
@@ -101,26 +91,35 @@ export function PixPaymentCard() {
   };
 
   return (
-    <section
+    <motion.section
+      initial={{opacity: 0, y: 14}}
+      animate={{opacity: 1, y: 0}}
+      transition={{duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1]}}
       aria-labelledby="pix-payment-heading"
-      className="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-10 shadow-[0_14px_40px_rgb(15,23,42,0.05)] dark:shadow-[0_14px_40px_rgb(0,0,0,0.35)] transition-colors duration-200 animate-fade-slide-up [animation-delay:140ms]"
+      className="relative w-full bg-[#0E1422]/95 backdrop-blur-md border border-white/[0.09] rounded-3xl p-6 sm:p-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_24px_60px_rgba(0,0,0,0.55)] overflow-hidden"
     >
+      {/* Subtle electric blue-violet top specular glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-44 rounded-full bg-indigo-500/[0.12] blur-3xl"
+      />
+
       {/* Centered Payment Header */}
-      <div className="flex flex-col items-center text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#00A88F]/10 dark:bg-[#00A88F]/15 flex items-center justify-center mb-4">
+      <div className="relative flex flex-col items-center text-center">
+        <div className="w-13 h-13 rounded-2xl bg-indigo-500/[0.12] border border-indigo-400/25 shadow-[0_0_24px_rgba(99,102,241,0.2)] flex items-center justify-center mb-4">
           <PixLogo className="w-7 h-7" />
         </div>
 
         <h1
           id="pix-payment-heading"
-          className="font-display text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight text-balance"
+          className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight text-balance"
         >
           {PIX_PAYMENT_DATA.title}
         </h1>
 
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm text-slate-400">
           Transferência instantânea
-          <span aria-hidden="true" className="mx-2 text-slate-300 dark:text-slate-700">
+          <span aria-hidden="true" className="mx-2 text-slate-600">
             ·
           </span>
           Disponível 24h
@@ -128,132 +127,71 @@ export function PixPaymentCard() {
       </div>
 
       {/* Receiver Information Ledger */}
-      <div className="mt-8 border-t border-b border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+      <div className="relative mt-8 bg-[#090D18]/75 border border-white/[0.07] rounded-2xl px-5 sm:px-6 divide-y divide-white/[0.06]">
         <div className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-center sm:text-left">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Nome</span>
-          <span className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-slate-100">
+          <span className="text-xs font-medium text-slate-400">Nome</span>
+          <span className="text-base sm:text-[17px] font-semibold text-white tracking-[0.01em]">
             {PIX_PAYMENT_DATA.receiverName}
           </span>
         </div>
 
         <div className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-center sm:text-left">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-medium text-slate-400">
             Banco recebedor
           </span>
-          <span className="text-base sm:text-[17px] font-semibold text-slate-900 dark:text-slate-100">
+          <span className="text-base sm:text-[17px] font-semibold text-white tracking-[0.01em]">
             {PIX_PAYMENT_DATA.receiverBank}
           </span>
         </div>
 
         <div className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-center sm:text-left">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-medium text-slate-400">
             Chave Pix ({PIX_PAYMENT_DATA.pixKeyType})
           </span>
-          <span className="font-mono tabular-nums text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 tracking-wide select-all">
+          <span className="font-mono tabular-nums text-lg sm:text-xl font-semibold text-sky-300 tracking-wider select-all">
             {PIX_PAYMENT_DATA.pixKey}
           </span>
         </div>
       </div>
 
-      {/* Dominant Primary Action Button */}
-      <div className="mt-8 relative">
-        {/* Expanding emerald pulse ring on click */}
-        {copyPulseKey > 0 && buttonCopied && (
-          <motion.span
-            key={`ring-${copyPulseKey}`}
-            aria-hidden="true"
-            initial={{opacity: 0.55, scale: 0.98}}
-            animate={{opacity: 0, scale: 1.05}}
-            transition={{duration: 0.55, ease: [0.16, 1, 0.3, 1]}}
-            className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-emerald-500"
-          />
-        )}
+      {/* Dominant Primary Action Button with Subtle Luminous Glow */}
+      <div className="relative mt-8">
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute -inset-1 rounded-2xl blur-xl transition-opacity duration-300 ${
+            copied
+              ? 'bg-emerald-500/30 opacity-100'
+              : 'bg-gradient-to-r from-indigo-600/35 via-violet-500/35 to-blue-500/35 opacity-85'
+          }`}
+        />
 
         <motion.button
+          key={copyPulseKey}
           type="button"
           onClick={handleCopyPix}
-          whileTap={{scale: 0.965}}
-          animate={
-            buttonCopied
-              ? {scale: [1, 1.018, 1]}
-              : {scale: 1}
-          }
-          transition={{duration: 0.28, ease: [0.16, 1, 0.3, 1]}}
-          className={`relative w-full min-h-[60px] px-6 py-4 rounded-2xl font-display font-bold text-base sm:text-lg tracking-wide flex items-center justify-center gap-3 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 cursor-pointer ${
-            buttonCopied
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25 focus-visible:ring-emerald-600'
-              : 'bg-[#00A88F] hover:bg-[#008F7A] text-white shadow-lg shadow-[#00A88F]/20 focus-visible:ring-[#00A88F]'
+          whileTap={{scale: 0.985}}
+          className={`relative w-full min-h-[60px] px-6 py-4 rounded-2xl font-display font-bold text-base sm:text-lg tracking-wide flex items-center justify-center gap-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1422] cursor-pointer ${
+            copied
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-[0_0_28px_rgba(16,185,129,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] focus-visible:ring-emerald-400'
+              : 'bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#3B82F6] hover:from-[#5B52F0] hover:via-[#7275F6] hover:to-[#4B8EF8] text-white shadow-[0_0_30px_rgba(99,102,241,0.42),inset_0_1px_0_rgba(255,255,255,0.24)] hover:shadow-[0_0_40px_rgba(99,102,241,0.58),inset_0_1px_0_rgba(255,255,255,0.3)] focus-visible:ring-indigo-400'
           }`}
         >
-          <span className="relative flex items-center justify-center w-7 h-7 shrink-0">
-            <AnimatePresence mode="wait" initial={false}>
-              {buttonCopied ? (
-                <motion.span
-                  key={`check-${copyPulseKey}`}
-                  initial={{scale: 0.4, rotate: -20, opacity: 0}}
-                  animate={{scale: 1, rotate: 0, opacity: 1}}
-                  exit={{scale: 0.5, rotate: 12, opacity: 0}}
-                  transition={{type: 'spring', stiffness: 520, damping: 24}}
-                  className="w-7 h-7 rounded-full bg-white text-emerald-600 shadow-sm flex items-center justify-center"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="w-4 h-4"
-                    aria-hidden="true"
-                  >
-                    <motion.path
-                      d="M5 13l4 4L19 7"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      initial={{pathLength: 0}}
-                      animate={{pathLength: 1}}
-                      transition={{duration: 0.28, delay: 0.06, ease: 'easeOut'}}
-                    />
-                  </svg>
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="copy-icon"
-                  initial={{scale: 0.7, opacity: 0}}
-                  animate={{scale: 1, opacity: 1}}
-                  exit={{scale: 0.6, rotate: 12, opacity: 0}}
-                  transition={{duration: 0.16, ease: [0.16, 1, 0.3, 1]}}
-                  className="flex items-center justify-center"
-                >
-                  <Copy className="w-5 h-5" aria-hidden="true" />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </span>
-
-          <AnimatePresence mode="wait" initial={false}>
-            {buttonCopied ? (
-              <motion.span
-                key="label-copied"
-                initial={{opacity: 0, y: 4}}
-                animate={{opacity: 1, y: 0}}
-                exit={{opacity: 0, y: -4}}
-                transition={{duration: 0.16}}
-                className="whitespace-nowrap"
-              >
-                CHAVE PIX COPIADA
-              </motion.span>
-            ) : (
-              <motion.span
-                key="label-copy"
-                initial={{opacity: 0, y: 4}}
-                animate={{opacity: 1, y: 0}}
-                exit={{opacity: 0, y: -4}}
-                transition={{duration: 0.16}}
-                className="whitespace-nowrap"
-              >
-                {PIX_PAYMENT_DATA.copyButtonLabel}
-              </motion.span>
-            )}
-          </AnimatePresence>
+          {copied ? (
+            <motion.span
+              initial={{scale: 0.6, opacity: 0}}
+              animate={{scale: 1, opacity: 1}}
+              transition={{type: 'spring', stiffness: 420, damping: 24}}
+              className="flex items-center gap-3"
+            >
+              <Check className="w-5 h-5 shrink-0 stroke-[2.5]" aria-hidden="true" />
+              <span>CHAVE PIX COPIADA</span>
+            </motion.span>
+          ) : (
+            <>
+              <Copy className="w-5 h-5 shrink-0" aria-hidden="true" />
+              <span>{PIX_PAYMENT_DATA.copyButtonLabel}</span>
+            </>
+          )}
         </motion.button>
 
         {/* Accessible Confirmation Banner */}
@@ -266,9 +204,9 @@ export function PixPaymentCard() {
               animate={{opacity: 1, y: 0, scale: 1}}
               exit={{opacity: 0, y: -4}}
               transition={{duration: 0.2, ease: [0.16, 1, 0.3, 1]}}
-              className="mt-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/70 px-4 py-3 flex items-center justify-center gap-2.5 text-emerald-800 dark:text-emerald-200"
+              className="mt-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-400/25 px-4 py-3 flex items-center justify-center gap-2.5 text-emerald-300"
             >
-              <Check className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" aria-hidden="true" />
+              <Check className="w-4 h-4 shrink-0 text-emerald-400 stroke-[2.5]" aria-hidden="true" />
               <span className="text-sm font-semibold">
                 {PIX_PAYMENT_DATA.copySuccessMessage}
               </span>
@@ -278,21 +216,21 @@ export function PixPaymentCard() {
       </div>
 
       {/* Bank App Quick Launcher */}
-      <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+      <div className="relative mt-6 pt-6 border-t border-white/[0.07]">
         <button
           type="button"
           onClick={() => setShowBanks((prev) => !prev)}
           aria-expanded={showBanks}
-          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm font-semibold flex items-center justify-between gap-3 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A88F] cursor-pointer"
+          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-100 text-sm font-semibold flex items-center justify-between gap-3 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 cursor-pointer"
         >
           <span className="flex items-center gap-2.5 text-left">
-            <Smartphone className="w-4 h-4 text-[#00A88F] dark:text-teal-400 shrink-0" aria-hidden="true" />
+            <Smartphone className="w-4 h-4 text-indigo-400 shrink-0" aria-hidden="true" />
             <span>Abrir aplicativo do seu banco</span>
           </span>
           {showBanks ? (
-            <ChevronUp className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+            <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+            <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
           )}
         </button>
 
@@ -305,7 +243,7 @@ export function PixPaymentCard() {
               transition={{duration: 0.2, ease: [0.16, 1, 0.3, 1]}}
               className="mt-4"
             >
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 text-center sm:text-left">
+              <p className="text-xs text-slate-400 mb-3 text-center sm:text-left">
                 Selecione seu banco para copiar a chave e abrir o aplicativo no celular:
               </p>
 
@@ -315,19 +253,19 @@ export function PixPaymentCard() {
                     key={bank.id}
                     type="button"
                     onClick={() => handleOpenBankApp(bank)}
-                    className="min-h-[48px] px-3 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 active:scale-[0.98] flex items-center gap-2.5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A88F] cursor-pointer"
+                    className="min-h-[48px] px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#141C2E]/90 hover:bg-[#1B253C] hover:border-indigo-400/35 active:scale-[0.98] flex items-center gap-2.5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 cursor-pointer"
                   >
                     <span
                       aria-hidden="true"
-                      className="w-7 h-7 rounded-lg text-white text-[11px] font-bold flex items-center justify-center shrink-0"
+                      className="w-7 h-7 rounded-lg text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm"
                       style={{backgroundColor: bank.accentHex}}
                     >
                       {bank.shortLabel}
                     </span>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate flex-1">
+                    <span className="text-xs font-semibold text-slate-100 truncate flex-1">
                       {bank.name}
                     </span>
-                    <ExternalLink className="w-3 h-3 text-slate-400 dark:text-slate-500 shrink-0 hidden sm:block" aria-hidden="true" />
+                    <ExternalLink className="w-3 h-3 text-slate-400 shrink-0 hidden sm:block" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -336,7 +274,7 @@ export function PixPaymentCard() {
                 <p
                   role="status"
                   aria-live="polite"
-                  className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5"
+                  className="mt-3 text-xs leading-relaxed text-slate-300 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5"
                 >
                   {bankNotice}
                 </p>
@@ -345,6 +283,6 @@ export function PixPaymentCard() {
           )}
         </AnimatePresence>
       </div>
-    </section>
+    </motion.section>
   );
 }

@@ -10,10 +10,6 @@ export const PIX_PAYMENT_DATA = {
     'Olá! Para fazer o pagamento via Pix, é só apertar o botão Copiar chave Pix e realizar o pagamento pelo aplicativo do seu banco.',
   assistantAvatarUrl: '/src/assets/images/virtual_assistant_avatar_1795186624290.jpg',
   footerText: 'Pagamento seguro e prático. Obrigado pela preferência!',
-  whatsappPhone: '', // Preencher com DDI + DDD + número (ex: 5511999999999)
-  whatsappSupportLabel: 'Suporte via WhatsApp',
-  whatsappPrefilledMessage:
-    'Olá, Maicon! Realizei um pagamento via Pix e gostaria de tirar uma dúvida.',
 } as const;
 
 export interface BankAppOption {
